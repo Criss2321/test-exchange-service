@@ -16,11 +16,20 @@ spring:
     console:
       enabled: true
       path: /h2-console
+  cloud:
+    openfeign:
+      client:
+        config:
+          exchangeRateApi:
+            connect-timeout: 3000
+            read-timeout: 5000
 
 exchange-rate:
   api:
     base-url: https://v6.exchangerate-api.com/v6
-    key: "*****"
+    key: ${EXCHANGE_RATE_API_KEY:}
 
-
-#Abre http://localhost:8080/h2-console
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
