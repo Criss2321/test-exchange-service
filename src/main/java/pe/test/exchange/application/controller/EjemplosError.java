@@ -42,6 +42,14 @@ final class EjemplosError {
             }
             """;
 
+    static final String REGISTRO_NO_DISPONIBLE = """
+            {
+              "title": "Registro no disponible",
+              "status": 503,
+              "detail": "No se pudo acceder al registro de conversiones, intenta nuevamente más tarde"
+            }
+            """;
+
     private EjemplosError() {
     }
 }

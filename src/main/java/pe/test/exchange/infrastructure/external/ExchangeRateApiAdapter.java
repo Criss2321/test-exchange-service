@@ -1,6 +1,9 @@
 package pe.test.exchange.infrastructure.external;
 
 import feign.FeignException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.retry.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,8 +20,10 @@ import pe.test.exchange.infrastructure.external.dto.ExchangeRateApiResponse;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @Slf4j
 @Component
@@ -31,6 +36,8 @@ public class ExchangeRateApiAdapter implements ProveedorTipoCambio {
     private final ExchangeRateApiClient exchangeRateApiClient;
     private final ExchangeRateApiProperties properties;
     private final JsonMapper jsonMapper;
+    private final CircuitBreaker circuitBreaker;
+    private final Retry retry;
 
     @Override
     public TipoCambio obtenerTipoCambio(ParMonedas par) {
@@ -55,9 +62,18 @@ public class ExchangeRateApiAdapter implements ProveedorTipoCambio {
     }
 
     private ExchangeRateApiResponse invocarApi(Moneda base) {
+        Supplier<ExchangeRateApiResponse> consulta =
+                () -> exchangeRateApiClient.getLatestRates(properties.key(), base.codigo());
         try {
-            return exchangeRateApiClient.getLatestRates(properties.key(), base.codigo());
+            return Retry.decorateSupplier(retry, CircuitBreaker.decorateSupplier(circuitBreaker, consulta)).get();
+        } catch (CallNotPermittedException ex) {
+            log.warn("Circuito abierto: se omite la consulta a ExchangeRate-API para {}", base.codigo());
+            throw new TipoCambioNoDisponibleException();
         } catch (FeignException ex) {
+            if (ex.getCause() instanceof IOException causa) {
+                log.error("ExchangeRate-API no respondió para {}: {}", base.codigo(), causa.toString());
+                throw new TipoCambioNoDisponibleException();
+            }
             throw traducirError(base, ex.status(), leerCuerpoDeError(ex));
         }
     }

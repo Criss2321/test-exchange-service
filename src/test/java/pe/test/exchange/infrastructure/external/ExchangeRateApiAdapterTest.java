@@ -1,5 +1,8 @@
 package pe.test.exchange.infrastructure.external;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +40,8 @@ class ExchangeRateApiAdapterTest {
     @BeforeEach
     void setUp() {
         adapter = new ExchangeRateApiAdapter(exchangeRateApiClient, new ExchangeRateApiProperties(API_KEY),
-                JsonMapper.builder().build());
+                JsonMapper.builder().build(), CircuitBreaker.ofDefaults("exchangeRateApi"),
+                Retry.of("exchangeRateApi", RetryConfig.custom().maxAttempts(1).build()));
     }
 
     @Test

@@ -12,6 +12,7 @@ import pe.test.exchange.application.dto.ConversionResponse;
 import pe.test.exchange.application.service.ConversionService;
 import pe.test.exchange.domain.exception.MonedaNoSoportadaException;
 import pe.test.exchange.domain.exception.MonedasIgualesException;
+import pe.test.exchange.domain.exception.RegistroNoDisponibleException;
 import pe.test.exchange.domain.exception.TipoCambioNoDisponibleException;
 import pe.test.exchange.domain.model.Moneda;
 
@@ -139,6 +140,15 @@ class ConversionControllerTest {
     }
 
     @Test
+    void convertirResponde503CuandoLaConversionNoSePudoRegistrar() throws Exception {
+        when(conversionService.convertir(any())).thenThrow(new RegistroNoDisponibleException());
+
+        convertir(SOLICITUD_VALIDA)
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.title").value("Registro no disponible"));
+    }
+
+    @Test
     void convertirNoExponeDetallesInternosAnteUnErrorInesperado() throws Exception {
         when(conversionService.convertir(any())).thenThrow(new IllegalStateException("conexión a BD perdida"));
 
@@ -158,6 +168,15 @@ class ConversionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(id.toString()))
                 .andExpect(jsonPath("$[0].fechaOperacion").value("2026-10-27T15:15:30Z"));
+    }
+
+    @Test
+    void listarHistorialResponde503CuandoElRegistroNoEstaDisponible() throws Exception {
+        when(conversionService.listarHistorial()).thenThrow(new RegistroNoDisponibleException());
+
+        mockMvc.perform(get(URL + "/historial"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.title").value("Registro no disponible"));
     }
 
     private ResultActions convertir(String cuerpo) throws Exception {

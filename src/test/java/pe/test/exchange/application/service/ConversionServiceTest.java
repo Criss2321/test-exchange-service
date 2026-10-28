@@ -11,6 +11,7 @@ import pe.test.exchange.application.dto.ConversionRequest;
 import pe.test.exchange.application.dto.ConversionResponse;
 import pe.test.exchange.application.mapper.ConversionMapper;
 import pe.test.exchange.domain.exception.MonedasIgualesException;
+import pe.test.exchange.domain.exception.RegistroNoDisponibleException;
 import pe.test.exchange.domain.exception.TipoCambioNoDisponibleException;
 import pe.test.exchange.domain.model.Conversion;
 import pe.test.exchange.domain.model.Moneda;
@@ -30,6 +31,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -95,6 +97,16 @@ class ConversionServiceTest {
                 .isInstanceOf(TipoCambioNoDisponibleException.class);
 
         verifyNoInteractions(conversionRepository);
+    }
+
+    @Test
+    void noDevuelveUnResultadoCuandoLaConversionNoSePudoRegistrar() {
+        when(proveedorTipoCambio.obtenerTipoCambio(USD_PEN)).thenReturn(new TipoCambio(USD_PEN, new BigDecimal("3.70")));
+        doThrow(new RegistroNoDisponibleException()).when(conversionRepository).guardar(any());
+        ConversionRequest request = new ConversionRequest(BigDecimal.TEN, "USD", "PEN");
+
+        assertThatThrownBy(() -> conversionService.convertir(request))
+                .isInstanceOf(RegistroNoDisponibleException.class);
     }
 
     @Test

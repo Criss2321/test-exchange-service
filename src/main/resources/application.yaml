@@ -22,12 +22,21 @@ spring:
         config:
           exchangeRateApi:
             connect-timeout: 3000
-            read-timeout: 5000
+            read-timeout: 3000
 
 exchange-rate:
   api:
     base-url: https://v6.exchangerate-api.com/v6
     key: ${EXCHANGE_RATE_API_KEY:}
+    resiliencia:
+      reintento:
+        max-intentos: 2
+        espera: 300ms
+      circuito:
+        ventana: 10
+        llamadas-minimas: 5
+        porcentaje-fallos: 50
+        espera-abierto: 30s
 
 springdoc:
   swagger-ui:

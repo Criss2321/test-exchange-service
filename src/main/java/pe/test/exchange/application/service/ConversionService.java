@@ -2,7 +2,6 @@ package pe.test.exchange.application.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import pe.test.exchange.application.dto.ConversionHistorialResponse;
 import pe.test.exchange.application.dto.ConversionRequest;
 import pe.test.exchange.application.dto.ConversionResponse;
@@ -30,7 +29,6 @@ public class ConversionService {
         return conversionMapper.aResponse(conversion);
     }
 
-    @Transactional(readOnly = true)
     public List<ConversionHistorialResponse> listarHistorial() {
         return conversionRepository.listarHistorial().stream()
                 .map(conversionMapper::aHistorialResponse)

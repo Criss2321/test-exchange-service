@@ -42,15 +42,22 @@ public class ConversionController {
     @ApiResponse(responseCode = "422", description = "Moneda no soportada por el proveedor", content = @Content(
             mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class),
             examples = @ExampleObject(value = EjemplosError.MONEDA_NO_SOPORTADA)))
-    @ApiResponse(responseCode = "503", description = "Proveedor de tipo de cambio no disponible", content = @Content(
+    @ApiResponse(responseCode = "503", description = "Proveedor de tipo de cambio o registro no disponible", content = @Content(
             mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class),
-            examples = @ExampleObject(value = EjemplosError.PROVEEDOR_NO_DISPONIBLE)))
+            examples = {
+                    @ExampleObject(name = "Proveedor no disponible", value = EjemplosError.PROVEEDOR_NO_DISPONIBLE),
+                    @ExampleObject(name = "Registro no disponible", value = EjemplosError.REGISTRO_NO_DISPONIBLE)
+            }))
     public ConversionResponse convertir(@Valid @RequestBody ConversionRequest request) {
         return conversionService.convertir(request);
     }
 
     @GetMapping("/historial")
     @Operation(summary = "Lista las conversiones registradas, de la más reciente a la más antigua")
+    @ApiResponse(responseCode = "200", description = "Historial de conversiones")
+    @ApiResponse(responseCode = "503", description = "Registro no disponible", content = @Content(
+            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class),
+            examples = @ExampleObject(value = EjemplosError.REGISTRO_NO_DISPONIBLE)))
     public List<ConversionHistorialResponse> listarHistorial() {
         return conversionService.listarHistorial();
     }

@@ -18,6 +18,7 @@ import pe.test.exchange.domain.exception.MonedaInvalidaException;
 import pe.test.exchange.domain.exception.MonedaNoSoportadaException;
 import pe.test.exchange.domain.exception.MonedasIgualesException;
 import pe.test.exchange.domain.exception.MontoInvalidoException;
+import pe.test.exchange.domain.exception.RegistroNoDisponibleException;
 import pe.test.exchange.domain.exception.TipoCambioNoDisponibleException;
 
 import java.util.LinkedHashMap;
@@ -59,6 +60,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(TipoCambioNoDisponibleException.class)
     public ProblemDetail manejarTipoCambioNoDisponible(TipoCambioNoDisponibleException ex) {
         return crearProblema(HttpStatus.SERVICE_UNAVAILABLE, "Tipo de cambio no disponible", ex.getMessage());
+    }
+
+    @ExceptionHandler(RegistroNoDisponibleException.class)
+    public ProblemDetail manejarRegistroNoDisponible(RegistroNoDisponibleException ex) {
+        return crearProblema(HttpStatus.SERVICE_UNAVAILABLE, "Registro no disponible", ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
