@@ -11,10 +11,10 @@ public record ConversionHistorialResponse(
 
         UUID id,
 
-        @Schema(example = "100.00")
+        @Schema(example = "100")
         BigDecimal monto,
 
-        @Schema(example = "370.00")
+        @Schema(example = "344.86")
         BigDecimal montoConvertido,
 
         @Schema(example = "USD")
@@ -23,7 +23,7 @@ public record ConversionHistorialResponse(
         @Schema(example = "PEN")
         String monedaDestino,
 
-        @Schema(example = "3.70")
+        @Schema(example = "3.4486")
         BigDecimal tipoCambio,
 
         @Schema(example = "2026-10-27T15:15:30Z")

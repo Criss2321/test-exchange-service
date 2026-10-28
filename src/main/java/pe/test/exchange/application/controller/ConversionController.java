@@ -2,6 +2,7 @@ package pe.test.exchange.application.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,11 +34,17 @@ public class ConversionController {
     @Operation(summary = "Convierte un monto usando el tipo de cambio vigente y registra la operación")
     @ApiResponse(responseCode = "200", description = "Conversión realizada")
     @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content(
-            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class)))
+            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class),
+            examples = {
+                    @ExampleObject(name = "Campos inválidos", value = EjemplosError.CAMPOS_INVALIDOS),
+                    @ExampleObject(name = "Monedas iguales", value = EjemplosError.MONEDAS_IGUALES)
+            }))
     @ApiResponse(responseCode = "422", description = "Moneda no soportada por el proveedor", content = @Content(
-            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class)))
+            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class),
+            examples = @ExampleObject(value = EjemplosError.MONEDA_NO_SOPORTADA)))
     @ApiResponse(responseCode = "503", description = "Proveedor de tipo de cambio no disponible", content = @Content(
-            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class)))
+            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ProblemDetail.class),
+            examples = @ExampleObject(value = EjemplosError.PROVEEDOR_NO_DISPONIBLE)))
     public ConversionResponse convertir(@Valid @RequestBody ConversionRequest request) {
         return conversionService.convertir(request);
     }

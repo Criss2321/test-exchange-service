@@ -10,7 +10,7 @@ public record ConversionResponse(
         @Schema(example = "100")
         BigDecimal monto,
 
-        @Schema(example = "370.00")
+        @Schema(example = "344.86")
         BigDecimal montoConvertido,
 
         @Schema(example = "USD")
@@ -19,7 +19,7 @@ public record ConversionResponse(
         @Schema(example = "PEN")
         String monedaDestino,
 
-        @Schema(example = "3.70")
+        @Schema(example = "3.4486")
         BigDecimal tipoCambio
 ) {
 }
