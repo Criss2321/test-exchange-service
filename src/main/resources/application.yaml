@@ -27,7 +27,7 @@ spring:
 exchange-rate:
   api:
     base-url: https://v6.exchangerate-api.com/v6
-    key: ${EXCHANGE_RATE_API_KEY:}
+    key: ${EXCHANGE_RATE_API_KEY:3635bb7bf1393d87c4dd5155}
     resiliencia:
       reintento:
         max-intentos: 2

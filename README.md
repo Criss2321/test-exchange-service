@@ -16,27 +16,28 @@ Microservicio que convierte montos entre monedas con el tipo de cambio vigente d
 
 ## Cómo ejecutar
 
-Requisito: JDK 17 o superior. Maven no hace falta porque el proyecto incluye el wrapper.
+Requisito: JDK 17 o superior (`java -version`). Maven no hace falta porque el proyecto incluye el wrapper, y la API key del reto ya viene configurada.
 
-La API key no está versionada. Se lee de la variable de entorno `EXCHANGE_RATE_API_KEY`. Usa la key que viene en el documento del reto.
+```bash
+git clone https://github.com/Criss2321/test-exchange-service.git
+cd test-exchange-service
+```
 
 **Linux / macOS / Git Bash**
 
 ```bash
-export EXCHANGE_RATE_API_KEY=<tu-api-key>
 ./mvnw spring-boot:run
 ```
 
-**PowerShell**
+**Windows (CMD o PowerShell)**
 
 ```powershell
-$env:EXCHANGE_RATE_API_KEY="<tu-api-key>"
 .\mvnw.cmd spring-boot:run
 ```
 
-**IntelliJ IDEA:** en la configuración de ejecución de `ExchangeServiceApplication`, agrega `EXCHANGE_RATE_API_KEY=<tu-api-key>` en *Environment variables*.
+**IntelliJ IDEA:** abre la carpeta del proyecto, espera a que Maven descargue las dependencias y ejecuta `ExchangeServiceApplication`.
 
-Si la variable no está definida, la aplicación no arranca e indica qué falta.
+Para usar otra API key, define la variable de entorno `EXCHANGE_RATE_API_KEY`; tiene prioridad sobre la configurada. Si el puerto 8080 está ocupado, agrega `-Dspring-boot.run.arguments=--server.port=8081` al comando.
 
 Con la aplicación arriba:
 
