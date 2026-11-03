@@ -59,6 +59,32 @@ Con la aplicación arriba:
 
 Las pruebas no necesitan la API key ni conexión a internet. Desde el IDE se ejecutan con clic derecho sobre `src/test/java` y *Run 'All Tests'*.
 
+### Verificación desde cero
+
+Para validar el proyecto y dejar el resultado en un archivo, sin depender de la salida de la terminal:
+
+**Linux / macOS / Git Bash**
+
+```bash
+./mvnw -B -ntp clean test > resultado.txt 2>&1
+tail -n 12 resultado.txt
+```
+
+**Windows (CMD o PowerShell)**
+
+```powershell
+.\mvnw.cmd -B -ntp clean test > resultado.txt 2>&1
+```
+
+El final de `resultado.txt` debe mostrar:
+
+```text
+[INFO] Tests run: 80, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+```
+
+La primera ejecución descarga las dependencias y tarda entre 1 y 2 minutos; las siguientes, unos 20 segundos. El detalle de cada clase de prueba queda en `target/surefire-reports`.
+
 ## Endpoints
 
 ### `POST /api/conversion`
