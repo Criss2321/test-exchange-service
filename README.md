@@ -53,7 +53,11 @@ Con la aplicación arriba:
 ./mvnw test
 ```
 
-Las pruebas no necesitan la API key ni conexión a internet.
+```powershell
+.\mvnw.cmd test
+```
+
+Las pruebas no necesitan la API key ni conexión a internet. Desde el IDE se ejecutan con clic derecho sobre `src/test/java` y *Run 'All Tests'*.
 
 ## Endpoints
 
