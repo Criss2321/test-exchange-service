@@ -3,8 +3,9 @@ package pe.test.exchange.infrastructure.external;
 import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
-import lombok.RequiredArgsConstructor;
+import io.github.resilience4j.retry.RetryRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -27,17 +28,27 @@ import java.util.function.Supplier;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ExchangeRateApiAdapter implements ProveedorTipoCambio {
 
     private static final String RESULTADO_EXITOSO = "success";
     private static final String ERROR_MONEDA_NO_SOPORTADA = "unsupported-code";
+    static final String INSTANCIA_RESILIENCIA = "exchangeRateApi";
 
     private final ExchangeRateApiClient exchangeRateApiClient;
     private final ExchangeRateApiProperties properties;
     private final JsonMapper jsonMapper;
     private final CircuitBreaker circuitBreaker;
     private final Retry retry;
+
+    public ExchangeRateApiAdapter(ExchangeRateApiClient exchangeRateApiClient, ExchangeRateApiProperties properties,
+                                  JsonMapper jsonMapper, CircuitBreakerRegistry circuitBreakerRegistry,
+                                  RetryRegistry retryRegistry) {
+        this.exchangeRateApiClient = exchangeRateApiClient;
+        this.properties = properties;
+        this.jsonMapper = jsonMapper;
+        this.circuitBreaker = circuitBreakerRegistry.circuitBreaker(INSTANCIA_RESILIENCIA);
+        this.retry = retryRegistry.retry(INSTANCIA_RESILIENCIA);
+    }
 
     @Override
     public TipoCambio obtenerTipoCambio(ParMonedas par) {

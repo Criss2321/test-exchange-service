@@ -28,15 +28,26 @@ exchange-rate:
   api:
     base-url: https://v6.exchangerate-api.com/v6
     key: ${EXCHANGE_RATE_API_KEY:3635bb7bf1393d87c4dd5155}
-    resiliencia:
-      reintento:
-        max-intentos: 2
-        espera: 300ms
-      circuito:
-        ventana: 10
-        llamadas-minimas: 5
-        porcentaje-fallos: 50
-        espera-abierto: 30s
+
+resilience4j:
+  retry:
+    instances:
+      exchangeRateApi:
+        max-attempts: 2
+        wait-duration: 300ms
+        retry-exceptions:
+          - feign.RetryableException
+          - feign.FeignException$FeignServerException
+  circuitbreaker:
+    instances:
+      exchangeRateApi:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        record-exceptions:
+          - feign.RetryableException
+          - feign.FeignException$FeignServerException
 
 springdoc:
   swagger-ui:

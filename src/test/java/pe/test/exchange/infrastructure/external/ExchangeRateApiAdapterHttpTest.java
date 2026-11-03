@@ -3,6 +3,8 @@ package pe.test.exchange.infrastructure.external;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.RetryRegistry;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +17,6 @@ import pe.test.exchange.domain.exception.TipoCambioNoDisponibleException;
 import pe.test.exchange.domain.model.Moneda;
 import pe.test.exchange.domain.model.ParMonedas;
 import pe.test.exchange.domain.model.TipoCambio;
-import pe.test.exchange.infrastructure.config.ResilienciaProperties;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -53,10 +54,13 @@ class ExchangeRateApiAdapterHttpTest {
     private ExchangeRateApiAdapter adapter;
 
     @Autowired
-    private CircuitBreaker circuitBreaker;
+    private CircuitBreakerRegistry circuitBreakerRegistry;
 
     @Autowired
-    private ResilienciaProperties resiliencia;
+    private RetryRegistry retryRegistry;
+
+    private CircuitBreaker circuitBreaker;
+    private int maxIntentos;
 
     @DynamicPropertySource
     static void apuntarAlServidorSimulado(DynamicPropertyRegistry registry) throws IOException {
@@ -66,7 +70,8 @@ class ExchangeRateApiAdapterHttpTest {
         servidor.start();
         registry.add("exchange-rate.api.base-url", () -> "http://localhost:" + servidor.getAddress().getPort());
         registry.add("exchange-rate.api.key", () -> API_KEY);
-        registry.add("exchange-rate.api.resiliencia.reintento.espera", () -> "10ms");
+        registry.add("resilience4j.retry.instances." + ExchangeRateApiAdapter.INSTANCIA_RESILIENCIA + ".wait-duration",
+                () -> "10ms");
         registry.add("spring.cloud.openfeign.client.config.exchangeRateApi.read-timeout", () -> TIMEOUT_LECTURA_MS);
     }
 
@@ -79,7 +84,9 @@ class ExchangeRateApiAdapterHttpTest {
     void reiniciar() {
         respuestas.clear();
         llamadasRecibidas.set(0);
+        circuitBreaker = circuitBreakerRegistry.circuitBreaker(ExchangeRateApiAdapter.INSTANCIA_RESILIENCIA);
         circuitBreaker.reset();
+        maxIntentos = retryRegistry.retry(ExchangeRateApiAdapter.INSTANCIA_RESILIENCIA).getRetryConfig().getMaxAttempts();
     }
 
     @Test
@@ -130,7 +137,7 @@ class ExchangeRateApiAdapterHttpTest {
 
         assertThatThrownBy(() -> adapter.obtenerTipoCambio(USD_PEN))
                 .isInstanceOf(TipoCambioNoDisponibleException.class);
-        assertThat(llamadasRecibidas).hasValue(resiliencia.reintento().maxIntentos());
+        assertThat(llamadasRecibidas).hasValue(maxIntentos);
     }
 
     @Test
@@ -139,7 +146,7 @@ class ExchangeRateApiAdapterHttpTest {
 
         assertThatThrownBy(() -> adapter.obtenerTipoCambio(USD_PEN))
                 .isInstanceOf(TipoCambioNoDisponibleException.class);
-        assertThat(llamadasRecibidas).hasValue(resiliencia.reintento().maxIntentos());
+        assertThat(llamadasRecibidas).hasValue(maxIntentos);
     }
 
     @Test
@@ -147,7 +154,7 @@ class ExchangeRateApiAdapterHttpTest {
         responderCon(ERROR_DEL_SERVIDOR);
         int peticionesFallidas = 0;
         while (circuitBreaker.getState() == CircuitBreaker.State.CLOSED
-                && peticionesFallidas < resiliencia.circuito().ventana()) {
+                && peticionesFallidas < circuitBreaker.getCircuitBreakerConfig().getSlidingWindowSize()) {
             assertThatThrownBy(() -> adapter.obtenerTipoCambio(USD_PEN))
                     .isInstanceOf(TipoCambioNoDisponibleException.class);
             peticionesFallidas++;
@@ -163,7 +170,7 @@ class ExchangeRateApiAdapterHttpTest {
     @Test
     void unaMonedaNoSoportadaNoCuentaComoFallaDelProveedor() {
         responderCon(MONEDA_NO_SOPORTADA);
-        for (int i = 0; i < resiliencia.circuito().ventana(); i++) {
+        for (int i = 0; i < circuitBreaker.getCircuitBreakerConfig().getSlidingWindowSize(); i++) {
             assertThatThrownBy(() -> adapter.obtenerTipoCambio(USD_PEN))
                     .isInstanceOf(MonedaNoSoportadaException.class);
         }

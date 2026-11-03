@@ -10,7 +10,7 @@ Microservicio que convierte montos entre monedas con el tipo de cambio vigente d
 | Spring Boot | 4.0.6 |
 | Spring Cloud OpenFeign | 2025.1.1 |
 | Spring Data JPA + H2 | En memoria |
-| Resilience4j (retry y circuit breaker) | 2.3.0 |
+| Spring Cloud CircuitBreaker + Resilience4j (retry y circuit breaker) | 2.3.0 |
 | springdoc-openapi (Swagger UI) | 3.0.3 |
 | JUnit 5, Mockito, AssertJ | Pruebas |
 
@@ -135,7 +135,7 @@ Los errores siguen el formato [Problem Details (RFC 9457)](https://www.rfc-edito
 | Reintento | 2 intentos, 300 ms entre ellos | Solo ante fallas de red, timeout al conectar o al esperar la respuesta, o 5xx. Un 4xx (moneda no soportada, key inválida) no se reintenta porque volvería a fallar igual. |
 | Circuit breaker | Ventana de los últimos 10 intentos (cada reintento cuenta), se abre con 50 % de fallas a partir de 5 intentos y queda abierto 30 s | Con el circuito abierto se responde 503 al instante, sin llamar a la API. Pasado ese tiempo deja pasar llamadas de prueba y se cierra si responden bien. |
 
-Los valores se ajustan en `application.yaml`, bajo `exchange-rate.api.resiliencia`. Una moneda no soportada no cuenta como falla: el proveedor respondió bien, el problema es el dato.
+Los valores se ajustan en `application.yaml`, en la instancia `exchangeRateApi` de `resilience4j.retry` y `resilience4j.circuitbreaker`. Una moneda no soportada no cuenta como falla: el proveedor respondió bien, el problema es el dato.
 
 ## Arquitectura
 
@@ -155,7 +155,7 @@ pe.test.exchange
 └── infrastructure
     ├── external       Cliente Feign y ExchangeRateApiAdapter
     ├── persistence    Entidad JPA, repositorio Spring Data y ConversionRepositoryAdapter
-    └── config         Beans, propiedades, resiliencia, Jackson y OpenAPI
+    └── config         Beans, propiedades, Jackson y OpenAPI
 ```
 
 ```text
@@ -177,7 +177,7 @@ ConversionController
 
 **Las caídas de la base de datos también se traducen.** El adaptador de persistencia convierte las fallas pasajeras (conexión, transacción, recurso no disponible) en `RegistroNoDisponibleException`. Si no se pudo guardar, el cliente recibe un 503 y no un resultado que no quedó registrado. Un error que no es pasajero, como una violación de restricción, sigue como 500, porque reintentar no lo arregla.
 
-**Retry y circuit breaker sin anotaciones.** Uso los módulos de Resilience4j directamente en el adaptador, decorando la llamada de Feign. Así se ve en un solo lugar qué se reintenta y qué cuenta como falla, y no depende de AOP.
+**Retry y circuit breaker con la integración de Spring.** Spring Cloud CircuitBreaker con Resilience4j crea el reintento y el circuito a partir de `application.yaml`, donde también se define qué excepciones se reintentan y cuáles cuentan como falla. El adaptador los toma del registro por nombre y decora la llamada de Feign, así el orden (reintento por fuera, circuito por dentro) queda explícito en el código.
 
 **La fecha sale de un `Clock` inyectado y se guarda en UTC.** Las pruebas fijan el reloj, y el historial ordena bien sin depender de la zona horaria del servidor.
 
